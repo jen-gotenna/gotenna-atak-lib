@@ -49,9 +49,14 @@ jobs:
           assert any(n.endswith("py.typed") for n in names), "wheel missing py.typed"
           print(f"OK: {len(yamls)} specs + py.typed in wheel")
           PY
-      - name: Publish to internal index
+      - name: Publish to internal index (skips cleanly if secrets unset)
         env:
           TWINE_REPOSITORY_URL: ${{ secrets.TWINE_REPOSITORY_URL }}
           TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-        run: twine upload dist/*
+        run: |
+          if [ -z "$TWINE_REPOSITORY_URL" ] || [ -z "$TWINE_PASSWORD" ]; then
+            echo "::notice::TWINE_* secrets not set -- skipping publish (build + wheel assertion still ran)."
+            exit 0
+          fi
+          twine upload dist/*
