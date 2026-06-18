@@ -1,0 +1,58 @@
+"""atak_lib -- env-agnostic ATAK UI driver + command library.
+
+This module IS the public API. Anything not re-exported here -- e.g. ``registry``,
+the ``ui.base`` engine internals (``ScreenCommand``), ``session.capabilities``,
+``session.stub_driver`` -- is private and may change without a major-version bump.
+
+Importing ``atak_lib`` reads no environment variables and does NOT import Appium
+(Appium is imported lazily only when a real session connects), so it is safe to
+import in any context, hardware or not.
+
+Quickstart::
+
+    from atak_lib import SessionManager, DeviceSpec, verify_screen
+
+    with SessionManager([DeviceSpec(udid="...")], stub=False) as s:
+        result = verify_screen("ui.verify_onboarding_screen", s.driver)
+        assert result.passed, result.failures
+
+Add your own screens without forking the library::
+
+    from atak_lib import register_spec_root, verify_screen
+    register_spec_root("my/specs")            # holds ui/verify_foo.yaml
+    verify_screen("ui.verify_foo", driver)    # YAML stays the single source of truth
+"""
+from atak_lib import catalog, runtime
+from atak_lib.session.session_manager import DeviceSpec, SessionManager
+from atak_lib.spec import (
+    CommandSpec,
+    load_command_spec,
+    load_command_spec_by_name,
+    register_spec_root,
+)
+from atak_lib.ui.base import ScreenVerificationResult
+from atak_lib.ui.verify import verify_screen
+from atak_lib.ui.verify_device_details_screen import verify_device_details_screen
+from atak_lib.ui.verify_onboarding_screen import verify_onboarding_screen
+from atak_lib.ui.verify_set_as_relay_dialog import verify_set_as_relay_dialog
+
+__all__ = [
+    # command catalog (run / available / all_specs / get) + env-free runtime helpers
+    "catalog",
+    "runtime",
+    # sessions & devices
+    "SessionManager",
+    "DeviceSpec",
+    # result & spec types (the typed surface)
+    "ScreenVerificationResult",
+    "CommandSpec",
+    # spec loading / consumer extension
+    "load_command_spec",
+    "load_command_spec_by_name",
+    "register_spec_root",
+    # screen verification
+    "verify_screen",
+    "verify_onboarding_screen",
+    "verify_device_details_screen",
+    "verify_set_as_relay_dialog",
+]

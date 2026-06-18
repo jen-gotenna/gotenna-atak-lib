@@ -1,0 +1,193 @@
+# Command spec: verify_onboarding_screen
+# Source of truth for the shared implementation (atak_lib/ui/verify_onboarding_screen.py)
+# and the three adapter bindings. Claude Code regenerates impl/tests/adapters from this file.
+
+name: verify_onboarding_screen
+command: ui.verify_onboarding_screen   # dotted registry name
+layer: ui
+screen_name: onboarding_home
+target_plugin_version: "3.0"   # com.gotenna.atak 3.0
+
+testrail:
+  case_id: C147673
+  title: Validate components of the Onboarding home screen
+  section: 01 Common Functionality Between Apps > Onboarding
+  type: Partial Automation
+  priority: High
+  automated_app: Pro App
+  applies_to: [ATAK, Pro]
+  os_version: Android & iOS
+  references: [PRO-86, ATAK-2716, PRO-459, PRO-617]
+
+description: >
+  Soft-assert the components of the ATAK plugin onboarding/welcome ("home")
+  screen per TestRail C147673. Collects every missing component into
+  `failures: list[str]` instead of raising on the first miss. CONFIRMED locators
+  are asserted strictly; UNCONFIRMED locators are tolerated when absent
+  (pre-hardware) so the suite stays green until verified with Appium Inspector on
+  a 3.0 build. Per C147673's section ("01 Common Functionality Between Apps"),
+  this onboarding home screen is shared by the ATAK plugin and the Pro App; this
+  spec targets the plugin package (com.gotenna.atak), and the same checks apply to
+  the Pro App (whose resource-ids may differ -- confirm per app).
+
+inputs:
+  - name: driver
+    type: WebDriver
+    description: Injected Appium driver (or StubWebDriver in stub mode).
+  - name: stub
+    type: bool
+    default: false
+    description: Injected by the adapter from ATAK_STUB_MODE. Never read inside atak_lib.
+  - name: stub_returns
+    type: list[str] | None
+    default: null
+    description: Canned failures list returned in stub mode. None => [] (all pass).
+  - name: lenient_if_unconfirmed
+    type: bool
+    default: true
+    description: Tolerate absent UNCONFIRMED locators (pre-hardware green path).
+
+outputs:
+  - name: result
+    type: ScreenVerificationResult
+    fields:
+      passed: bool          # True when failures is empty
+      failures: list[str]   # one message per failed (or strictly-missing) component
+      results: list[AssertionResult]
+
+stub_returns:
+  failures: []   # happy-path stub: no failures
+
+real_impl:
+  module: atak_lib.ui.verify_onboarding_screen
+  callable: verify_onboarding_screen
+  # Finalize per-component real_impl notes after the first 3.0 hardware session.
+
+raises: []   # soft-assertion command; does not raise. Adapters assert on result.failures.
+
+requires:
+  packages:
+    - com.atakmap.app.civ   # ATAK core
+    - com.gotenna.atak      # goTenna plugin (target 3.0)
+  screen: onboarding/welcome home (plugin first-run, "select a deployment option")
+
+# Components per C147673 (ATAK variant). All 10 are PRESENT on the ATAK plugin and
+# all 10 are CONFIRMED on plugin 3.0.0 (859d398a) from a real SM-S721U/Android 14
+# session. The 3.x screen is a redesign, so the 2.x ids did NOT carry over (logo,
+# qr, manual ids were corrected here). Selectors are resource-id, except the 3
+# button subtexts (shared secondaryText id) which use -android uiautomator child
+# scoping. Terms text differs from the case wording -- see known_gaps.
+#
+# this_build_present: whether the component ships on THIS app (all true for the ATAK
+# plugin). The deployment-option subtext + Deploy via QR Code + Manual Setup are
+# absent ONLY on Pro App 3.1.0 (PRO-330 / PRO-318) -- that gating lives in the
+# proapp sample, not here.
+assertions:
+  - name: logo
+    by: id
+    value: com.gotenna.atak:id/gotennaLogoImageView
+    status: CONFIRMED
+    component: Logo (ATAK goTenna logo)
+    this_build_present: true
+    note: id confirmed on 3.0.0 (859d398a); ImageView, content-desc "goTenna ATAK Plugin".
+  - name: logo_subtext
+    by: id
+    value: com.gotenna.atak:id/welcomeSubtitleTextView
+    status: CONFIRMED
+    component: Logo subtext
+    this_build_present: true    # present on the ATAK plugin
+    note: Unique id confirmed on 3.0.0; text "Please select a deployment option below". Absent only on Pro App 3.1.0 (PRO-330) -- see proapp sample.
+  - name: login_button
+    by: id
+    value: com.gotenna.atak:id/loginButton
+    status: CONFIRMED           # verified on our 3.0.0 hardware run
+    component: Login button
+    this_build_present: true
+    expect_enabled: true        # Login is enabled
+    note: id + enabled=true confirmed on 3.0.0 (859d398a). (All three options are enabled on this build.)
+  - name: login_subtext
+    by: "-android uiautomator"
+    value: 'new UiSelector().resourceId("com.gotenna.atak:id/loginButton").childSelector(new UiSelector().resourceId("com.gotenna.atak:id/secondaryText"))'
+    status: CONFIRMED
+    component: Login subtext
+    this_build_present: true
+    note: secondaryText id is shared by all 3 buttons; scoped by parent loginButton id (no xpath, locale-independent). Text "Login with a Portal account.".
+  - name: deploy_qr_button
+    by: id
+    value: com.gotenna.atak:id/qrButton
+    status: CONFIRMED
+    component: Deploy via QR Code button
+    this_build_present: true    # present on ATAK plugin; absent on Pro App 3.1.0 (PRO-318)
+    note: id confirmed on 3.0.0 (qrButton, not onboardingDeployQrButton); enabled=true.
+  - name: deploy_qr_subtext
+    by: "-android uiautomator"
+    value: 'new UiSelector().resourceId("com.gotenna.atak:id/qrButton").childSelector(new UiSelector().resourceId("com.gotenna.atak:id/secondaryText"))'
+    status: CONFIRMED
+    component: Deploy via QR Code subtext
+    this_build_present: true
+    note: Scoped by parent qrButton id (no xpath). Text "Scan a user provided QR Code.".
+  - name: manual_setup_button
+    by: id
+    value: com.gotenna.atak:id/manualSetupButton
+    status: CONFIRMED
+    component: Manual Setup button
+    this_build_present: true    # present on ATAK plugin; absent on Pro App 3.1.0 (PRO-318)
+    note: id confirmed on 3.0.0 (manualSetupButton); enabled=true.
+  - name: manual_setup_subtext
+    by: "-android uiautomator"
+    value: 'new UiSelector().resourceId("com.gotenna.atak:id/manualSetupButton").childSelector(new UiSelector().resourceId("com.gotenna.atak:id/secondaryText"))'
+    status: CONFIRMED
+    component: Manual Setup subtext
+    this_build_present: true
+    note: Scoped by parent manualSetupButton id (no xpath). Text "Take me right into the app.".
+  - name: terms_of_service_checkbox
+    by: id
+    value: com.gotenna.atak:id/termsCheckbox
+    status: CONFIRMED           # verified on our 3.0.0 hardware run
+    component: Terms of Service checkbox
+    this_build_present: true
+    note: id confirmed on 3.0.0 (ImageView, clickable, content-desc "I agree to the Terms of Service"); 3.x uses a checkbox, not the 2.x agree/cancel buttons.
+  - name: terms_of_service_text
+    by: id
+    value: com.gotenna.atak:id/termsCheckboxText
+    status: CONFIRMED
+    component: Terms of Service text
+    this_build_present: true
+    note: Unique id confirmed on 3.0.0; text "I agree to the Terms of Service" (build says "Service", case says "Use" -- see known_gaps).
+
+android_version_notes: >
+  Written against plugin 3.0 (ATAK variant). C147673 applies to both ATAK and Pro
+  App and to Android & iOS. On the ATAK plugin ALL deployment options are present
+  (logo + subtext, Login, Deploy via QR Code, Manual Setup, Terms of Service). The
+  "Not available on Pro App 3.1.0" notations in the case are PRO-APP-scoped: logo
+  subtext (PRO-330) and Deploy via QR Code + Manual Setup (PRO-318) are absent on
+  Pro App 3.1.0 only -- see the proapp sample. The 2.x legacy onboarding flow
+  (Get Started -> Choose Device -> ToU agree/cancel) does NOT match this 3.x screen.
+
+known_gaps:
+  - >
+    Terms text discrepancy: C147673 says "I agree to the Terms of Use", but the
+    build renders "I agree to the Terms of Service" (with "Terms of Service" as a
+    link). The spec asserts the actual build string; the TestRail case language is
+    left unchanged per guidance (do NOT edit the case).
+  - >
+    All 10 locators CONFIRMED by us on plugin 3.0.0 (859d398a) via a real
+    SM-S721U / Android 14 hardware session (test_results/onboarding_hierarchy.xml).
+    7 are plain resource-id; the 3 button subtexts use -android uiautomator
+    (UiSelector resourceId+childSelector) because secondaryText is shared by all
+    three buttons -- no xpath remains in this spec.
+  - >
+    App-scoped availability (corrected): the case's "Not available on Pro App 3.1.0"
+    notations (Deploy via QR Code + Manual Setup = PRO-318; logo subtext = PRO-330)
+    apply to the PRO APP, not the ATAK plugin. On the ATAK plugin all 10 are present
+    (this_build_present: true). The Pro App absences live in the proapp sample.
+  - >
+    Shared screen (not an app variant): C147673 is "Common Functionality Between
+    Apps" and applies to ATAK and Pro. The same component set + build gating apply
+    to both. This spec uses the ATAK plugin package (com.gotenna.atak); to also
+    drive the standalone Pro App, confirm that app's resource-ids (they may differ
+    by package) and reuse the same checks.
+  - >
+    Case is "Partial Automation": the logo image and exact iOS parity are likely
+    manual/visual checks; this command automates the Android component presence +
+    subtext strings + enabled-state.

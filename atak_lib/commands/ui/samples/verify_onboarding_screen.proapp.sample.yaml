@@ -1,0 +1,124 @@
+# ============================================================================
+# STANDBY SAMPLE -- NOT IN CURRENT SCOPE, NOT WIRED INTO ANY RUNNER.
+# ============================================================================
+# We are NOT tasked with automating the standalone Pro App right now. This file
+# is a ready-to-go reference showing how the SAME shared command
+# (atak_lib.ui.verify_onboarding_screen) would target the Pro App, since C147673
+# is "Common Functionality Between Apps" and documents the Pro App behavior.
+#
+# To activate later: move/copy into atak_lib/commands/ui/, confirm the Pro App package +
+# resource-ids on hardware, and bind it through the adapters exactly like the
+# plugin spec. No atak_lib change is required -- only selectors/metadata differ.
+# ============================================================================
+
+name: verify_onboarding_screen_proapp
+layer: ui
+status: standby-sample          # not active; reference only
+target_app: Pro App
+target_version: "3.1.0"         # version C147673's PRO-318/PRO-330 notes reference
+
+testrail:
+  case_id: C147673              # same shared case as the plugin spec
+  title: Validate components of the Onboarding home screen
+  section: 01 Common Functionality Between Apps > Onboarding
+  applies_to: [ATAK, Pro]
+  references: [PRO-86, ATAK-2716, PRO-459, PRO-617, PRO-318, PRO-330]
+
+description: >
+  Pro App variant of the shared onboarding home screen check. Reuses the shared
+  command atak_lib.ui.verify_onboarding_screen; only the package, selectors, and
+  per-component presence differ. On Pro App 3.1.0 the screen is: goTenna PRO+
+  logo (no subtext -- PRO-330), Login + subtext, and Terms of Service; Deploy via
+  QR Code and Manual Setup are not available (PRO-318).
+
+requires:
+  packages:
+    - <PRO_APP_PACKAGE>         # TODO: confirm the standalone Pro App package id
+  screen: onboarding/welcome home
+
+real_impl:
+  module: atak_lib.ui.verify_onboarding_screen
+  callable: verify_onboarding_screen
+  note: Shared command; supply Pro App selectors via a Pro-specific locator set.
+
+# All UNCONFIRMED + placeholder selectors (<PRO_APP_PACKAGE>): confirm on a Pro
+# App 3.1.0 build. this_build_present mirrors the PRO-318 / PRO-330 notations.
+assertions:
+  - name: logo
+    by: id
+    value: <PRO_APP_PACKAGE>:id/onboardingLogoImageView
+    status: UNCONFIRMED
+    component: Logo (goTenna PRO+ logo -- differs from the ATAK goTenna logo)
+    this_build_present: true
+    todo: Confirm Pro App logo resource-id (PRO+ asset).
+  - name: logo_subtext
+    by: xpath
+    value: "//android.widget.TextView[@text='Please select a deployment option below']"
+    status: UNCONFIRMED
+    component: Logo subtext
+    this_build_present: false   # PRO-330: subtext not available on Pro App 3.1.0
+    todo: Confirm when/if subtext ships on Pro App.
+  - name: login_button
+    by: id
+    value: <PRO_APP_PACKAGE>:id/onboardingLoginButton
+    status: UNCONFIRMED
+    component: Login button
+    this_build_present: true
+    expect_enabled: true
+    todo: Confirm resource-id.
+  - name: login_subtext
+    by: xpath
+    value: "//android.widget.TextView[@text='Login with a Portal account.']"
+    status: UNCONFIRMED
+    component: Login subtext
+    this_build_present: true
+    todo: Confirm selector.
+  - name: deploy_qr_button
+    by: id
+    value: <PRO_APP_PACKAGE>:id/onboardingDeployQrButton
+    status: UNCONFIRMED
+    component: Deploy via QR Code button
+    this_build_present: false   # PRO-318: not available on Pro App 3.1.0
+    todo: Confirm when it returns.
+  - name: deploy_qr_subtext
+    by: xpath
+    value: "//android.widget.TextView[@text='Scan a user provided QR Code.']"
+    status: UNCONFIRMED
+    component: Deploy via QR Code subtext
+    this_build_present: false
+    todo: Confirm when it returns.
+  - name: manual_setup_button
+    by: id
+    value: <PRO_APP_PACKAGE>:id/onboardingManualSetupButton
+    status: UNCONFIRMED
+    component: Manual Setup button
+    this_build_present: false   # PRO-318: not available on Pro App 3.1.0
+    todo: Confirm when it returns.
+  - name: manual_setup_subtext
+    by: xpath
+    value: "//android.widget.TextView[@text='Take me right into the app.']"
+    status: UNCONFIRMED
+    component: Manual Setup subtext
+    this_build_present: false
+    todo: Confirm when it returns.
+  - name: terms_of_service_checkbox
+    by: id
+    value: <PRO_APP_PACKAGE>:id/tosCheckbox
+    status: UNCONFIRMED
+    component: Terms of Service checkbox
+    this_build_present: true
+    todo: Confirm resource-id.
+  - name: terms_of_service_text
+    by: xpath
+    value: "//android.widget.TextView[@text='I agree to the Terms of Service']"
+    status: UNCONFIRMED
+    component: Terms of Service text
+    this_build_present: true
+    todo: Confirm selector (Terms of Use vs Terms of Service discrepancy -- see plugin spec).
+
+known_gaps:
+  - Standby only. Not wired into adapters/tests and excluded from CI.
+  - Pro App package id is a placeholder (<PRO_APP_PACKAGE>); confirm on hardware.
+  - >
+    Logo differs from the plugin (goTenna PRO+ vs goTenna). All selectors here are
+    unverified placeholders pending a Pro App 3.1.0 device session.

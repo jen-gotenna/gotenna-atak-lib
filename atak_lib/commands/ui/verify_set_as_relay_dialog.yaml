@@ -1,0 +1,152 @@
+# Command spec: verify_set_as_relay_dialog
+# Source of truth for the shared implementation (atak_lib/ui/verify_set_as_relay_dialog.py)
+# and any adapter bindings. Claude Code regenerates impl/tests/adapters from this file.
+
+name: verify_set_as_relay_dialog
+command: ui.verify_set_as_relay_dialog   # dotted registry name
+layer: ui
+screen_name: set_as_relay_dialog
+target_plugin_version: "3.0"   # com.gotenna.atak 3.0 (confirmed on 3.0.0)
+
+testrail:
+  case_id: C149725
+  title: Validate components of Set as Relay dialog
+  section: 01 Common Functionality Between Apps > Home Page > Device Details
+  type: Partial Automation
+  priority: High
+  automated_app: Pro App
+  applies_to: [Pro]
+  os_version: Android & iOS
+  references: [PRO-163]
+
+description: >
+  Soft-assert the components of the "Set as Relay" confirmation dialog per TestRail
+  C149725, shown when the user taps "Set as Relay" on the Device Details page while a
+  goTenna radio is connected via BLE. Collects every failing component into
+  `failures: list[str]` instead of raising on the first miss.
+
+  SPEC-FIRST / INTENTIONAL FAILURES: the title and body are asserted against the
+  TestRail case TEXT (not mere element presence), so they FAIL on plugin 3.0.0 where
+  the copy differs (title renders "Notice"; body wording differs). This is deliberate
+  -- it surfaces the product/spec divergence the way a spec-first test authored during
+  development would, and there is no confirmed source of truth for the dialog copy
+  yet. When the copy is confirmed, update the expected text in this YAML. (These two
+  reds also serve as a live exercise of the failure-reporting path.)
+
+  SAFETY: this command only ASSERTS the dialog's components -- it never taps the
+  dialog's confirm "Set as Relay" button. Confirming relay mode disconnects the radio
+  from the end device and requires a manual power-cycle to undo, so the navigation
+  precondition opens the dialog and the test dismisses it via Cancel.
+
+  PRECONDITION (not asserted here): a goTenna radio connected via BLE, the plugin on
+  the Device Details page, and the dialog open (tap
+  com.gotenna.atak:id/deviceDetailsRelayModeButton). See
+  atak_lib.ui.navigation.open_set_as_relay_dialog / cancel_set_as_relay_dialog.
+
+inputs:
+  - name: driver
+    type: WebDriver
+    description: Injected Appium driver (or StubWebDriver in stub mode).
+  - name: stub
+    type: bool
+    default: false
+    description: Injected by the adapter from ATAK_STUB_MODE. Never read inside atak_lib.
+  - name: stub_returns
+    type: list[str] | None
+    default: null
+    description: Canned failures list returned in stub mode. None => [] (all pass).
+  - name: lenient_if_unconfirmed
+    type: bool
+    default: true
+    description: Tolerate absent UNCONFIRMED locators (pre-hardware green path).
+
+outputs:
+  - name: result
+    type: ScreenVerificationResult
+    fields:
+      passed: bool          # True when failures is empty
+      failures: list[str]   # one message per failed (or strictly-missing) component
+      results: list[AssertionResult]
+
+stub_returns:
+  failures: []   # happy-path stub: no failures (the intentional reds are real-device only)
+
+real_impl:
+  module: atak_lib.ui.verify_set_as_relay_dialog
+  callable: verify_set_as_relay_dialog
+
+raises: []   # soft-assertion command; does not raise. Adapters assert on result.failures.
+
+requires:
+  packages:
+    - com.atakmap.app.civ   # ATAK core
+    - com.gotenna.atak      # goTenna plugin (target 3.0)
+  radio: goTenna radio connected via BLE
+  screen: 'Set as Relay confirm dialog open from the Device Details page'
+
+# Components per C149725 "Expected Result" (Title / Body / Cancel / Set as Relay),
+# mapped to the actual build. The dialog is a standard Android AlertDialog. Title and
+# body are asserted against the CASE TEXT via xpath-free UiSelector matchers, so they
+# resolve (and pass) ONLY if the build copy matches the spec -- currently they don't,
+# so they FAIL by design (see description + known_gaps). The two buttons are bound by
+# BOTH their AlertDialog role-id AND label, so they pass and the match is meaningful.
+assertions:
+  - name: dialog_title
+    by: -android uiautomator
+    value: new UiSelector().resourceId("android:id/alertTitle").text("Set as Relay?")
+    status: CONFIRMED
+    component: Dialog title
+    this_build_present: true
+    note: >
+      Asserts the CASE title "Set as Relay?". Plugin 3.0.0 renders "Notice", so this
+      FAILS by design until the copy is confirmed (known_gaps). Update the expected
+      text here when a source of truth lands.
+  - name: dialog_body
+    by: -android uiautomator
+    value: new UiSelector().resourceId("android:id/message").textContains("pair directly without manually resetting relay mode")
+    status: CONFIRMED
+    component: Dialog body text (relay-mode warning)
+    this_build_present: true
+    note: >
+      Asserts a distinctive phrase from the CASE body ("...you will not be able to
+      pair directly without manually resetting relay mode by turning the device on and
+      off with the power button."). Plugin 3.0.0 renders different wording ("...not be
+      able to reconnect to this radio until you take it out of relay mode by turning
+      the power off and on."), so this FAILS by design (known_gaps). Update the
+      expected phrase here when the copy source of truth is confirmed.
+  - name: cancel_button
+    by: -android uiautomator
+    value: new UiSelector().resourceId("android:id/button2").text("Cancel")
+    status: CONFIRMED
+    component: Cancel button
+    this_build_present: true
+    note: AlertDialog negative button (button2), label "Cancel". Matches the case.
+  - name: set_as_relay_button
+    by: -android uiautomator
+    value: new UiSelector().resourceId("android:id/button1").text("Set as Relay")
+    status: CONFIRMED
+    component: "Set as Relay (confirm) button"
+    this_build_present: true
+    note: >
+      AlertDialog positive button (button1), label "Set as Relay". Matches the case.
+      ASSERTED ONLY -- never tapped by automation (confirming sets relay mode and
+      disconnects the radio).
+
+known_gaps:
+  - >
+    INTENTIONAL FAILURES (title + body): asserted against the TestRail case copy, not
+    element presence, so they fail on plugin 3.0.0 where the copy differs. Title: case
+    "Set as Relay?" vs build "Notice". Body: case "...pair directly without manually
+    resetting relay mode by turning the device on and off with the power button." vs
+    build "...reconnect to this radio until you take it out of relay mode by turning
+    the power off and on." There is no confirmed source of truth for the dialog copy
+    yet; when one lands, update the expected text in this YAML.
+  - >
+    App-scoped reference (PRO-163): the case is tagged Automated App = Pro App and
+    references PRO-163 (PRO = Pro App Jira prefix). Verified here on the ATAK plugin,
+    where the dialog is present and functional.
+  - >
+    Generic AlertDialog ids: title/body live under android:id/alertTitle and
+    android:id/message (shared by any alert). Binding to THIS dialog rather than any
+    alert relies on the navigation precondition (tap the relay button) plus the
+    distinctive button labels ("Cancel" / "Set as Relay").

@@ -1,0 +1,57 @@
+name: release
+
+# Build + publish the wheel on a version tag (vX.Y.Z). Publishing targets an
+# internal index via twine; set TWINE_REPOSITORY_URL + credentials as repo secrets.
+# CI on push/PR just runs the unit suite (the library contract).
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e .[dev]
+      - run: pytest -q
+      - run: flake8 atak_lib
+
+  publish:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade pip build twine
+      - run: python -m build
+      # Verify the wheel actually bundles the YAML specs + py.typed before publishing.
+      - name: Assert wheel ships specs + py.typed
+        run: |
+          python - <<'PY'
+          import glob, zipfile
+          names = zipfile.ZipFile(glob.glob("dist/*.whl")[0]).namelist()
+          yamls = [n for n in names if n.endswith(".yaml")]
+          assert yamls, "wheel ships no YAML specs"
+          assert any(n.endswith("py.typed") for n in names), "wheel missing py.typed"
+          print(f"OK: {len(yamls)} specs + py.typed in wheel")
+          PY
+      - name: Publish to internal index
+        env:
+          TWINE_REPOSITORY_URL: ${{ secrets.TWINE_REPOSITORY_URL }}
+          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+        run: twine upload dist/*

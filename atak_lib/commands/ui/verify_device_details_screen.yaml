@@ -1,0 +1,325 @@
+# Command spec: verify_device_details_screen
+# Source of truth for the shared implementation (atak_lib/ui/verify_device_details_screen.py)
+# and any adapter bindings. Claude Code regenerates impl/tests/adapters from this file.
+
+name: verify_device_details_screen
+command: ui.verify_device_details_screen   # dotted registry name
+layer: ui
+screen_name: device_details
+scrollable: true   # long page: the verifier scrolls each locator into view before asserting
+target_plugin_version: "3.0"   # baseline: com.gotenna.atak 3.0 (confirmed on 3.0.0 / 859d398a)
+# Plugin version series this screen is maintained for. 3.0 is fully CONFIRMED below.
+# To ADD a new version (e.g. 3.2 when it ships) WITHOUT touching the 3.0 baseline:
+#   1. add "3.2" here, and 2. add a `versions:` override only on the locators that
+# actually change (see the relay_mode_set_button example). Locators with no override
+# apply unchanged to every supported version. A run resolves to the device's version.
+supported_versions: ["3.0"]
+
+testrail:
+  case_id: C149719
+  title: Validate Device Details page components when connected to a radio via BLE
+  section: 01 Common Functionality Between Apps > Home Page > Device Details
+  type: Partial Automation
+  priority: High
+  automated_app: Pro App
+  applies_to: [Pro, RHA]
+  os_version: Android & iOS
+  references: [PRO-96, PRO-164, PRO-163, PRO-463]
+
+description: >
+  Soft-assert the components of the goTenna Device Details page per TestRail
+  C149719, shown when a radio is connected via BLE. Collects every missing
+  component into `failures: list[str]` instead of raising on the first miss.
+  CONFIRMED locators are asserted strictly; UNCONFIRMED locators are tolerated
+  when absent (pre-hardware) under lenient_if_unconfirmed. All locators here were
+  CONFIRMED on a real radio ("Pro X2") + plugin 3.0.0 (859d398a) session.
+
+  PRECONDITION (not asserted by this command): a goTenna radio must be connected
+  via BLE, and the plugin must be on the Device Details page -- reached by tapping
+  the device card (`com.gotenna.atak:id/deviceCard`) on the radio status screen.
+  Connecting a radio advances the plugin PAST the onboarding home screen, so this
+  screen and verify_onboarding_screen are mutually exclusive on a given session.
+
+inputs:
+  - name: driver
+    type: WebDriver
+    description: Injected Appium driver (or StubWebDriver in stub mode).
+  - name: stub
+    type: bool
+    default: false
+    description: Injected by the adapter from ATAK_STUB_MODE. Never read inside atak_lib.
+  - name: stub_returns
+    type: list[str] | None
+    default: null
+    description: Canned failures list returned in stub mode. None => [] (all pass).
+  - name: lenient_if_unconfirmed
+    type: bool
+    default: true
+    description: Tolerate absent UNCONFIRMED locators (pre-hardware green path).
+
+outputs:
+  - name: result
+    type: ScreenVerificationResult
+    fields:
+      passed: bool          # True when failures is empty
+      failures: list[str]   # one message per failed (or strictly-missing) component
+      results: list[AssertionResult]
+
+stub_returns:
+  failures: []   # happy-path stub: no failures
+
+real_impl:
+  module: atak_lib.ui.verify_device_details_screen
+  callable: verify_device_details_screen
+
+raises: []   # soft-assertion command; does not raise. Adapters assert on result.failures.
+
+requires:
+  packages:
+    - com.atakmap.app.civ   # ATAK core
+    - com.gotenna.atak      # goTenna plugin (target 3.0)
+  radio: goTenna radio connected via BLE (this is the post-connection screen)
+  screen: Device Details page (tap the device card on the radio status screen)
+
+# Components per C149719. All CONFIRMED on plugin 3.0.0 (859d398a) against a real
+# "Pro X2" radio. Selectors are xpath-free resource-ids. Many rows carry DYNAMIC
+# values (battery %, antenna quality, operation mode, serial, firmware version) --
+# we assert the element's presence by id, NOT the volatile value; the expected
+# value FORMAT is recorded in each note. Icons and text are separate views with
+# their own ids (icon + text per row), matching the case's "[icon + text]" rows.
+assertions:
+  # ---- 1st row: connection status + Test Connection ----
+  - name: status_icon
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsStatusImageView
+    status: CONFIRMED
+    component: Connection status icon (bluetooth/connected)
+    this_build_present: true
+    note: id confirmed on 3.0.0; paired with deviceDetailsStatusTextView.
+  - name: status_text
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsStatusTextView
+    status: CONFIRMED
+    component: Connection status text
+    this_build_present: true
+    note: Dynamic value e.g. "Connected (Pro X2)"; assert presence, not the device name.
+  - name: test_connection_button
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsTestConnectionContainer
+    status: CONFIRMED
+    component: Test Connection button (sun icon + "Test Connection")
+    this_build_present: true
+    note: Clickable LinearLayout; child TextView reads "Test Connection" (no own id).
+  # ---- 2nd row: battery ----
+  - name: battery_icon
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsBatteryImageView
+    status: CONFIRMED
+    component: Battery icon
+    this_build_present: true
+  - name: battery_text
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsBatteryTextView
+    status: CONFIRMED
+    component: Battery text
+    this_build_present: true
+    note: >
+      Dynamic e.g. "81%". Case format is "battery% - Charging/Not Charging"; on this
+      build the charging suffix was not shown while not charging. Assert presence.
+  # ---- 3rd row: antenna quality ----
+  - name: antenna_icon
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsAntennaImageView
+    status: CONFIRMED
+    component: Antenna icon
+    this_build_present: true
+  - name: antenna_text
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsAntennaTextView
+    status: CONFIRMED
+    component: Antenna quality text
+    this_build_present: true
+    note: >
+      Dynamic "Antenna Quality: Excellent/Good/Average/Poor/Bad/Unknown". A "bad
+      antenna" Warning dialog can pop over this screen when quality is poor.
+  # ---- 4th row: operation mode ----
+  - name: operation_mode_icon
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsOperationModeImageView
+    status: CONFIRMED
+    component: Operation Mode icon (toolbox)
+    this_build_present: true
+  - name: operation_mode_text
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsOperationModeTextView
+    status: CONFIRMED
+    component: Operation Mode text
+    this_build_present: true
+    note: >
+      Dynamic "Operation Mode: Off/Normal/Relay". Assert presence.
+  # ---- 5th row: serial number ----
+  - name: serial_text
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsSerialTextView
+    status: CONFIRMED
+    component: Serial number text (radio icon + S/N)
+    this_build_present: true
+    note: >
+      Dynamic "Serial No: <S/N>" (e.g. "Serial No: PNE233600185"). Serial-row icon
+      id not separately confirmed; assert the text view.
+  # ---- 6th row: firmware + Change Firmware ----
+  - name: firmware_icon
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsFirmwareImageView
+    status: CONFIRMED
+    component: Firmware icon
+    this_build_present: true
+  - name: firmware_text
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsFirmwareTextView
+    status: CONFIRMED
+    component: Firmware text
+    this_build_present: true
+    note: >
+      Dynamic "Firmware: <version>" (e.g. "Firmware: 3.2.10"). Assert presence.
+  - name: change_firmware_button
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsChangeFirmwareContainer
+    status: CONFIRMED
+    component: Change Firmware button (chip icon + "Change Firmware")
+    this_build_present: true
+    note: Clickable LinearLayout; child TextView reads "Change Firmware" (no own id).
+  # ---- Settings + Modes section ----
+  - name: settings_modes_title
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsSettingsTitleTextView
+    status: CONFIRMED
+    component: "Settings + Modes section title"
+    this_build_present: true
+    note: Renders "Settings + modes" on this build.
+  - name: relay_mode_tile
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsRelayModeContainer
+    status: CONFIRMED
+    component: Relay Mode tile
+    this_build_present: true
+    note: Title "Relay Mode"; subtitle "This goTenna will only relay messages."
+  - name: relay_mode_set_button
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsRelayModeButton
+    status: CONFIRMED
+    component: Relay Mode "Set as Relay" button
+    this_build_present: true
+    # --- version-override TEMPLATE (no 3.2 build exists yet; commented out) -------
+    # When 3.2 ships, add "3.2" to supported_versions above and uncomment/fill the
+    # relevant deltas here. Only override what actually CHANGES; the 3.0 baseline
+    # above stays untouched and keeps testing legacy. Supported override keys:
+    #   by / value / status / note / this_build_present / expect_enabled, plus
+    #   {applies: false} to drop the component on that version.
+    # versions:
+    #   "3.2":
+    #     value: com.gotenna.atak:id/deviceDetailsSetRelayButton  # e.g. id renamed
+    #     status: UNCONFIRMED        # not yet verified on hardware for 3.2
+    #     note: confirm on first 3.2 device run
+  - name: led_mode_tile
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsLedModeContainer
+    status: CONFIRMED
+    component: LED tile
+    this_build_present: true
+    note: Title "LED"; subtitle "The LED will flash when sending or receiving messages."
+  - name: led_mode_switch
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsLedModeSwitch
+    status: CONFIRMED
+    component: LED toggle switch
+    this_build_present: true
+  - name: tether_mode_tile
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsTetherModeContainer
+    status: CONFIRMED
+    component: Tether Mode tile
+    this_build_present: true   # present on the ATAK plugin; PRO-463 hidden-for-RC1 is Pro-App-scoped
+    note: >
+      Title "Tether Mode". Present + functional on the ATAK plugin (3.0.0 / 859d398a).
+      C149719's "Hidden for RC1 (PRO-463)" is a Pro-App (PRO-*) Jira exclusion and does
+      NOT apply to the plugin -- so presence here is expected, not a discrepancy. Build
+      subtitle: "When connected via USB, reduce electrical interference and stop
+      charging until battery hits 15%."
+  - name: tether_mode_switch
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsTetherModeSwitch
+    status: CONFIRMED
+    component: Tether Mode toggle switch
+    this_build_present: true
+  - name: listen_only_mode_tile
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsListenOnlyModeContainer
+    status: CONFIRMED
+    component: Listen Only Mode tile
+    this_build_present: true
+    note: >
+      Title "Listen Only Mode"; subtitle "The goTenna radio will not transmit or
+      re-transmit any messages on the network."
+  - name: listen_only_mode_switch
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsListenOnlyModeSwitch
+    status: CONFIRMED
+    component: Listen Only Mode toggle switch
+    this_build_present: true
+  # ---- Floating Disconnect ----
+  - name: disconnect_button
+    by: id
+    value: com.gotenna.atak:id/btnPrimary
+    status: CONFIRMED
+    component: Floating Disconnect button
+    this_build_present: true
+    note: >
+      Generic id `btnPrimary` (not deviceDetails-prefixed); text "Disconnect". Unique
+      on this screen. Re-confirm uniqueness if other btnPrimary buttons appear.
+
+android_version_notes: >
+  Confirmed on plugin 3.0.0 (859d398a), ATAK-CIV, against a real "Pro X2" radio over
+  BLE (Samsung SM-S721U / Android 14). C149719 is "Common Functionality Between Apps."
+  This spec targets the ATAK plugin package (com.gotenna.atak); resource-ids may
+  differ on the Pro App -- confirm per app. NOTE: the PRO-prefixed references
+  (PRO-96/164/163/463) are Pro-App Jira tickets; any "hidden/excluded for RC" gating
+  they describe (e.g. PRO-463 Tether) applies to the Pro App, NOT the plugin, so on
+  the plugin all components are present. Not yet checked on other OS versions/OEMs or
+  a second radio model.
+
+known_gaps:
+  - >
+    Evidence provenance: RESOLVED 2026-06-04. All 23 locators are evidenced on disk
+    across a top+bottom capture pair -- test_results/device_details_top.xml (17
+    locators incl. the floating Disconnect) and test_results/device_details_bottom.xml
+    (the 6 below-fold ones: LED / Tether / Listen Only tiles + switches). A single
+    snapshot can't hold all 23 because the page exceeds one viewport; the pair does.
+    (Also verified live by the strict 23/23 CLI run + all three candidate runs.)
+  - >
+    App-scoped exclusions (PRO-*): the case's "Hidden for RC1 (PRO-463)" note on the
+    Tether tile -- like PRO-318/PRO-330 on onboarding -- is a Pro-App-scoped Jira
+    exclusion (PRO = Pro App prefix) and does NOT apply to the ATAK plugin. On the
+    plugin all Device Details components are present (this_build_present: true). Any
+    Pro-App absences belong in a proapp sample, not this plugin spec.
+  - >
+    Tether subtitle copy differs from the case text ("Limits USB charging to reduce
+    interference. Charging resumes if the battery drops below 15%."); build renders
+    "When connected via USB, reduce electrical interference and stop charging until
+    battery hits 15%." Minor copy confirmation, not a gating issue.
+  - >
+    Dynamic values: status (device name), battery %, antenna quality, operation
+    mode, serial number, and firmware version are runtime values. This command
+    asserts element PRESENCE by id, not the values. A future enhancement could
+    assert the static label prefixes ("Serial No:", "Operation Mode:", etc.) via
+    text once a stable assertion strategy for dynamic-prefixed text is chosen.
+  - >
+    Test Connection and Change Firmware are clickable LinearLayout containers whose
+    visible label lives in an unlabeled child TextView; we assert the container id.
+  - >
+    Antenna quality can trigger a goTenna "Warning: Antenna is bad!" dialog
+    (buttons OK / Ignore / Ignore Forever) that overlays this screen; a precondition
+    helper should dismiss it (session-scoped "Ignore") before asserting.
+  - >
+    No second radio model or OS-version/OEM matrix yet; serial-row icon id and the
+    Test Connection/Change Firmware child-text ids were not separately confirmed.

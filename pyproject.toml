@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gotenna-atak-lib"
+version = "0.1.0"
+description = "Env-agnostic ATAK UI driver + command library (locators as versioned YAML, reachable by any Python project or via a service boundary)."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+# Real-device execution: Appium is a LAZY/optional import (only when a real
+# session connects), so the core installs without it.
+appium = [
+    "Appium-Python-Client>=2.11.1,<3",
+    "selenium>=4.10",
+]
+# Reserved for the language-agnostic service boundary (Path B). Stdlib-only today.
+server = []
+# Library test + lint deps. pytest pinned <8 to match the framework repo's pins.
+dev = [
+    "pytest>=7.4,<8",
+    "flake8>=6.0",
+]
+
+[tool.setuptools]
+packages = [
+    "atak_lib",
+    "atak_lib.commands",
+    "atak_lib.session",
+    "atak_lib.device",
+    "atak_lib.radio",
+    "atak_lib.ui",
+    "atak_lib.execution",
+    "atak_lib.runtime",
+]
+
+[tool.setuptools.package-data]
+# PEP 561 marker: ship type hints to consumers.
+"atak_lib" = ["py.typed"]
+# YAML specs are data that must ship inside the wheel (loaded via
+# importlib.resources in atak_lib/spec.py). Paths are relative to the package.
+"atak_lib.commands" = ["ui/*.yaml", "ui/samples/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+addopts = "-ra"
