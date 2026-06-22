@@ -35,6 +35,14 @@ to [Semantic Versioning](https://semver.org/). The **YAML spec schema** and the
   (still working, unchanged); slated for removal in a future major once consumers
   migrate.
 
+- **Service boundary** (`atak_lib.server`, `[server]` extra, stdlib-only) — the
+  non-Python front door. `ApiApp` exposes the catalog + `Screen` over HTTP with an
+  **open/close session** lifecycle: `GET /api/selectors/<screen>`, `POST /api/session`
+  → `{sessionId}`, `DELETE /api/session/<id>`, `POST /api/action`, `POST /api/query`.
+  Every response carries a versioned `schemaVersion` (pinned by a contract test).
+  Console entry point `atak-lib-server`. Reads no env — the client states the target
+  (`{"stub": true}` or a device); real-device sessions take an injected `driver_factory`.
+
 ### Deprecated
 - The in-lib assertion path (`verify_screen`, `verify_*`, `ScreenCommand`): the
   library should report facts, not pass/fail. Use `Screen` + consumer-owned
