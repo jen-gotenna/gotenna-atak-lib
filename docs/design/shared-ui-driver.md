@@ -1,11 +1,11 @@
-# RFC 0001 — `gotenna-atak-lib` as a shared UI driver
+# Design (QA-3933) — `gotenna-atak-lib` as a shared UI driver
 
 **Status:** proposal (for review) · **Target release:** `gotenna-atak-lib` v0.2.0
 (semver-breaking) · **Tracking:** sub-task under epic QA-3916 · **Supersedes parts
 of:** the v3 verification-suite data model.
 
 > Decision needed before any code: the boundaries in §5 and §7, and the open
-> questions in §10. No schema changes land until this RFC is accepted.
+> questions in §10. No schema changes land until this design is accepted.
 
 ## 1. Problem
 
