@@ -1,0 +1,80 @@
+# Selector catalog: onboarding/welcome ("home") screen
+# DEFINITIONS ONLY -- how to ADDRESS each element. No assertions / expected results
+# (presence, enabled-state, expected text) -- those live in the consuming test
+# framework. See docs/rfc/0001-shared-ui-driver.md.
+#
+# `status` = selector RESOLVABILITY on the baseline build (CONFIRMED = verified on
+# hardware via Appium Inspector). `description` is a human label, not an assertion.
+# All 10 CONFIRMED on plugin 3.0.0 (859d398a), SM-S721U / Android 14.
+
+screen: onboarding
+layer: ui
+app: com.gotenna.atak
+supported_versions: ["3.0"]
+
+selectors:
+  logo:
+    by: id
+    value: com.gotenna.atak:id/gotennaLogoImageView
+    status: CONFIRMED
+    description: Logo (ATAK goTenna logo)
+
+  logo_subtext:
+    by: id
+    value: com.gotenna.atak:id/welcomeSubtitleTextView
+    status: CONFIRMED
+    description: Logo subtext
+
+  login_button:
+    by: id
+    value: com.gotenna.atak:id/loginButton
+    status: CONFIRMED
+    description: Login button
+
+  login_subtext:
+    by: "-android uiautomator"
+    value: 'new UiSelector().resourceId("com.gotenna.atak:id/loginButton").childSelector(new UiSelector().resourceId("com.gotenna.atak:id/secondaryText"))'
+    status: CONFIRMED
+    description: Login subtext (secondaryText scoped by parent loginButton; shared id)
+
+  deploy_qr_button:
+    by: id
+    value: com.gotenna.atak:id/qrButton
+    status: CONFIRMED
+    description: Deploy via QR Code button
+
+  deploy_qr_subtext:
+    by: "-android uiautomator"
+    value: 'new UiSelector().resourceId("com.gotenna.atak:id/qrButton").childSelector(new UiSelector().resourceId("com.gotenna.atak:id/secondaryText"))'
+    status: CONFIRMED
+    description: Deploy via QR Code subtext (scoped by parent qrButton)
+
+  manual_setup_button:
+    by: id
+    value: com.gotenna.atak:id/manualSetupButton
+    status: CONFIRMED
+    description: Manual Setup button
+
+  manual_setup_subtext:
+    by: "-android uiautomator"
+    value: 'new UiSelector().resourceId("com.gotenna.atak:id/manualSetupButton").childSelector(new UiSelector().resourceId("com.gotenna.atak:id/secondaryText"))'
+    status: CONFIRMED
+    description: Manual Setup subtext (scoped by parent manualSetupButton)
+
+  terms_of_service_checkbox:
+    by: id
+    value: com.gotenna.atak:id/termsCheckbox
+    status: CONFIRMED
+    description: Terms of Service checkbox
+
+  terms_of_service_text:
+    by: id
+    value: com.gotenna.atak:id/termsCheckboxText
+    status: CONFIRMED
+    description: Terms of Service text
+
+# Reserved (RFC 0001 decision 5) -- per-target overrides for non-Android targets,
+# e.g. a Flutter build addressed by semantic label. Additive; not resolved yet:
+#   <element>:
+#     targets:
+#       flutter: { by: accessibility id, value: "Login" }

@@ -37,14 +37,16 @@ packages = [
     "atak_lib.ui",
     "atak_lib.execution",
     "atak_lib.runtime",
+    "atak_lib.selectors",
 ]
 
 [tool.setuptools.package-data]
 # PEP 561 marker: ship type hints to consumers.
 "atak_lib" = ["py.typed"]
-# YAML specs are data that must ship inside the wheel (loaded via
-# importlib.resources in atak_lib/spec.py). Paths are relative to the package.
+# YAML specs/catalogs are data that must ship inside the wheel (loaded via
+# importlib.resources). Paths are relative to the package.
 "atak_lib.commands" = ["ui/*.yaml", "ui/samples/*.yaml"]
+"atak_lib.selectors" = ["ui/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]

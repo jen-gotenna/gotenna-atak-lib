@@ -8,6 +8,22 @@ to [Semantic Versioning](https://semver.org/). The **YAML spec schema** and the
 
 ## [Unreleased]
 
+### Added (RFC 0001 — shared UI driver, in progress toward v0.2.0)
+- **Selector catalog** (`atak_lib.selectors`) — an addressable element inventory
+  holding **definitions only** (`by`/`value` + resolvability: `status`,
+  `legacy_confirmed`, per-version overrides). No assertions/expected results — those
+  belong to the consuming test framework. Version-aware via the same MAJOR.MINOR
+  series matching as the locator model; ships as packaged YAML
+  (`atak_lib/selectors/<layer>/<screen>.yaml`). API: `load_catalog("ui.<screen>")`,
+  `catalog.locator(element, version)`, `selectors.locator(screen, element, version)`.
+- First catalog: `ui/onboarding.yaml` (10 selectors, migrated from the verify spec).
+- A per-target override axis is **reserved** (not yet resolved) so non-Android
+  targets (e.g. a Flutter app addressed by semantic label) are additive later.
+
+> The existing `verify_*` / `assertions` path is unchanged and still works; the
+> catalog is added alongside. Moving assertions out to consumers + the manipulation
+> API land in subsequent steps. This is a breaking-direction effort tracked for v0.2.0.
+
 ## [0.1.0] — extracted from the v3 QA automation suite
 
 First standalone release. Extracted from `atak-plugin-v3-qa-automation` (QA-3920),
