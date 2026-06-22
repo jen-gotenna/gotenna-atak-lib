@@ -8,6 +8,42 @@ to [Semantic Versioning](https://semver.org/). The **YAML spec schema** and the
 
 ## [Unreleased]
 
+### Added (QA-3933 — shared UI driver, in progress toward v0.2.0)
+- **Selector catalog** (`atak_lib.selectors`) — an addressable element inventory
+  holding **definitions only** (`by`/`value` + resolvability: `status`,
+  `legacy_confirmed`, per-version overrides). No assertions/expected results — those
+  belong to the consuming test framework. Version-aware via the same MAJOR.MINOR
+  series matching as the locator model; ships as packaged YAML
+  (`atak_lib/selectors/<layer>/<screen>.yaml`). API: `load_catalog("ui.<screen>")`,
+  `catalog.locator(element, version)`, `selectors.locator(screen, element, version)`.
+- First catalog: `ui/onboarding.yaml` (10 selectors, migrated from the verify spec).
+- A per-target override axis is **reserved** (not yet resolved) so non-Android
+  targets (e.g. a Flutter app addressed by semantic label) are additive later.
+- **`Screen` manipulation + state facade** (`atak_lib.Screen`) — drives an injected
+  Appium WebDriver via catalog-resolved selectors: `tap`, `type`, `wait_for`,
+  `scroll_into_view`, and the fact-returning `is_present` / `is_enabled` / `get_text`.
+  Returns facts, never pass/fail (assertions belong to consumers). Accepts a dotted
+  catalog name or a consumer-supplied `SelectorCatalog`; version-aware. Public API now
+  exports `Screen`, `Selector`, `SelectorCatalog`. `StubWebDriver` gained
+  `click`/`send_keys`/`clear`/`is_enabled` (+ interaction logs) so the facade is
+  fully exercisable offline.
+
+- **Consumer-oracle pattern + migration path.** `examples/consumer_oracle.py` (tested)
+  shows a consumer asserting expected results over the `Screen` driver — the template
+  replacing the in-lib `verify_*` path. `docs/migration-verify-to-screen.md` documents
+  the move. `verify_screen` / `verify_*` / `ScreenCommand` are now marked **legacy**
+  (still working, unchanged); slated for removal in a future major once consumers
+  migrate.
+
+### Deprecated
+- The in-lib assertion path (`verify_screen`, `verify_*`, `ScreenCommand`): the
+  library should report facts, not pass/fail. Use `Screen` + consumer-owned
+  assertions.
+
+> The existing `verify_*` / `assertions` path is unchanged and still works; the new
+> catalog + `Screen` are added alongside. The framework-repo rewiring (and any removal
+> of the legacy path) waits until a release including these lands. Tracked for v0.2.0.
+
 ## [0.1.0] — extracted from the v3 QA automation suite
 
 First standalone release. Extracted from `atak-plugin-v3-qa-automation` (QA-3920),

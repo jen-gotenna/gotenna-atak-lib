@@ -18,15 +18,22 @@ Locator = Tuple[str, str]
 
 class StubElement:
     def __init__(self, by: str, value: str, *, displayed: bool = True,
-                 attributes: Optional[Dict[str, str]] = None, text: str = ""):
+                 attributes: Optional[Dict[str, str]] = None, text: str = "",
+                 driver: Optional["StubWebDriver"] = None):
         self._by = by
         self._value = value
         self._displayed = displayed
         self._attributes = attributes or {}
         self.text = text
+        self._driver = driver   # back-ref so interactions are observable in tests
 
     def is_displayed(self) -> bool:
         return self._displayed
+
+    def is_enabled(self) -> bool:
+        # Default enabled; model a disabled element via attributes={"enabled": "false"}.
+        v = self._attributes.get("enabled")
+        return True if v is None else str(v).lower() == "true"
 
     def get_attribute(self, name: str) -> Optional[str]:
         return self._attributes.get(name)
@@ -34,6 +41,22 @@ class StubElement:
     @property
     def size(self) -> Dict[str, int]:
         return {"width": 100, "height": 40}
+
+    # --- manipulation (recorded on the driver so tests can assert) ---
+    def click(self) -> None:
+        if self._driver is not None:
+            self._driver.taps.append((self._by, self._value))
+
+    def send_keys(self, *values: Any) -> None:
+        text = "".join(str(v) for v in values)
+        self.text = (self.text or "") + text
+        if self._driver is not None:
+            self._driver.typed.append((self._by, self._value, text))
+
+    def clear(self) -> None:
+        self.text = ""
+        if self._driver is not None:
+            self._driver.cleared.append((self._by, self._value))
 
 
 class StubNoSuchElement(Exception):
@@ -58,6 +81,10 @@ class StubWebDriver:
         # Legacy code reads both spellings; mirror that for drop-in compatibility.
         self.desired_capabilities: Dict[str, Any] = {"udid": udid}
         self.quit_called = False
+        # Interaction logs (populated by StubElement) so tests can assert drives.
+        self.taps: list = []
+        self.typed: list = []
+        self.cleared: list = []
 
     def _is_present(self, by: str, value: str) -> bool:
         if self._present_all:
@@ -71,6 +98,7 @@ class StubWebDriver:
             by, value,
             attributes=self._attributes.get((by, value), {}),
             text=self._texts.get((by, value), ""),
+            driver=self,
         )
 
     def find_elements(self, by: str, value: str):

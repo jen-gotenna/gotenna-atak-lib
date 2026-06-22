@@ -2,9 +2,15 @@
 
 ``verify_screen`` resolves a command spec by dotted name -- honoring any
 ``register_spec_root`` overrides -- and runs the shared soft-assert engine against
-it. This is the public, no-Python-authoring path for consumers: drop a YAML spec in
-a registered spec root and call ``verify_screen("ui.<name>", driver)``. The engine
-(:class:`~atak_lib.ui.base.ScreenCommand`) stays internal.
+it. The engine (:class:`~atak_lib.ui.base.ScreenCommand`) stays internal.
+
+LEGACY (QA-3933): this is the *library-asserts* path -- it bundles the expected
+results into the library. Under the driver/oracle split the library reports facts and
+the **consumer** owns assertions. Prefer :class:`atak_lib.Screen` (selectors +
+manipulation + state queries) plus your own assertions; see
+``docs/migration-verify-to-screen.md`` and ``examples/consumer_oracle.py``. The
+``verify_*`` path still works and is unchanged, but is slated for removal in a future
+major once consumers have migrated.
 """
 from __future__ import annotations
 
