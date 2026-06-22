@@ -19,6 +19,14 @@ to [Semantic Versioning](https://semver.org/). The **YAML spec schema** and the
 - First catalog: `ui/onboarding.yaml` (10 selectors, migrated from the verify spec).
 - A per-target override axis is **reserved** (not yet resolved) so non-Android
   targets (e.g. a Flutter app addressed by semantic label) are additive later.
+- **`Screen` manipulation + state facade** (`atak_lib.Screen`) — drives an injected
+  Appium WebDriver via catalog-resolved selectors: `tap`, `type`, `wait_for`,
+  `scroll_into_view`, and the fact-returning `is_present` / `is_enabled` / `get_text`.
+  Returns facts, never pass/fail (assertions belong to consumers). Accepts a dotted
+  catalog name or a consumer-supplied `SelectorCatalog`; version-aware. Public API now
+  exports `Screen`, `Selector`, `SelectorCatalog`. `StubWebDriver` gained
+  `click`/`send_keys`/`clear`/`is_enabled` (+ interaction logs) so the facade is
+  fully exercisable offline.
 
 > The existing `verify_*` / `assertions` path is unchanged and still works; the
 > catalog is added alongside. Moving assertions out to consumers + the manipulation
