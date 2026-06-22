@@ -8,7 +8,7 @@ to [Semantic Versioning](https://semver.org/). The **YAML spec schema** and the
 
 ## [Unreleased]
 
-### Added (RFC 0001 — shared UI driver, in progress toward v0.2.0)
+### Added (QA-3933 — shared UI driver, in progress toward v0.2.0)
 - **Selector catalog** (`atak_lib.selectors`) — an addressable element inventory
   holding **definitions only** (`by`/`value` + resolvability: `status`,
   `legacy_confirmed`, per-version overrides). No assertions/expected results — those

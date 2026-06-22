@@ -1,6 +1,6 @@
 # Migration: in-lib `verify_*` → `Screen` + consumer-owned assertions
 
-**Why:** under RFC 0001 the library is a **driver** (selectors + manipulation + state,
+**Why:** under QA-3933 the library is a **driver** (selectors + manipulation + state,
 returns facts); the **consumer** owns expected results. The old in-lib `verify_*` /
 `ScreenCommand` path fused both — the library decided pass/fail. That's being retired
 so every consumer (this team's pytest suite, QWIK, future apps) brings its own
@@ -52,5 +52,5 @@ have migrated to `Screen`. New code should use `Screen` + its own assertions.
 
 The framework rewiring (replace its `verify_*` calls with `Screen` + an oracle like
 the example) lands **after** a library release that includes the catalog + `Screen`
-(i.e. once the RFC 0001 PRs merge and `v0.2.0` is cut). Until then the framework keeps
+(i.e. once the QA-3933 PRs merge and `v0.2.0` is cut). Until then the framework keeps
 consuming `v0.1.0` and its current verify path.

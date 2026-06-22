@@ -4,7 +4,7 @@
 ``register_spec_root`` overrides -- and runs the shared soft-assert engine against
 it. The engine (:class:`~atak_lib.ui.base.ScreenCommand`) stays internal.
 
-LEGACY (RFC 0001): this is the *library-asserts* path -- it bundles the expected
+LEGACY (QA-3933): this is the *library-asserts* path -- it bundles the expected
 results into the library. Under the driver/oracle split the library reports facts and
 the **consumer** owns assertions. Prefer :class:`atak_lib.Screen` (selectors +
 manipulation + state queries) plus your own assertions; see

@@ -1,6 +1,6 @@
 """Selector catalog: definitions only, version-aware resolution.
 
-The catalog is the addressable element inventory (RFC 0001). It carries selectors +
+The catalog is the addressable element inventory (QA-3933). It carries selectors +
 resolvability, never assertions. These tests pin packaged-catalog loading, by-name
 resolution, the unknown-element error, and per-version override resolution.
 """

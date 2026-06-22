@@ -2,7 +2,7 @@
 
 The catalog answers a single question: *how do I address element X on screen Y
 (for app version V)?* It holds **no assertions / expected results** -- those belong
-to each consuming test framework (RFC 0001, docs/rfc/0001-shared-ui-driver.md). What
+to each consuming test framework (QA-3933, docs/design/shared-ui-driver.md). What
 lives here is the locator (`by`/`value`) and its **resolvability** (`status`,
 `legacy_confirmed`, per-version overrides) -- the property that decides which
 selector is valid on a given build.
@@ -10,7 +10,7 @@ selector is valid on a given build.
 Selectors ship as YAML inside the package and load via importlib.resources.
 Version-awareness reuses the same MAJOR.MINOR series matching as the locator model.
 
-Reserved (RFC 0001 decision 5): a per-target override axis for non-Android targets
+Reserved (QA-3933 decision 5): a per-target override axis for non-Android targets
 (a Flutter app addressed by semantic label, iOS, web). Additive; not resolved yet.
 """
 from __future__ import annotations

@@ -7,7 +7,7 @@ Resolves named selectors from the catalog (:mod:`atak_lib.selectors`) and drives
 * **state queries** -- ``is_present``, ``is_enabled``, ``get_text`` (return **facts**)
 
 It never asserts or returns pass/fail -- judging expected results is the consuming
-test framework's job (RFC 0001). Works identically against a real Appium driver, a
+test framework's job (QA-3933). Works identically against a real Appium driver, a
 ``SessionManager``-created one, or ``StubWebDriver``; the lib depends only on the
 WebDriver interface (``find_element`` / ``find_elements`` + element ``click`` /
 ``send_keys`` / ``text`` / ``is_enabled``).

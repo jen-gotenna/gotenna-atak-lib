@@ -1,6 +1,6 @@
 """Reference: a CONSUMER's oracle built on the gotenna-atak-lib driver.
 
-This is the pattern every consumer follows under RFC 0001's driver/oracle split, and
+This is the pattern every consumer follows under QA-3933's driver/oracle split, and
 the replacement for the legacy in-lib ``verify_*`` path:
 
   * the **library** gives you selectors (the catalog) + a ``Screen`` driver that
