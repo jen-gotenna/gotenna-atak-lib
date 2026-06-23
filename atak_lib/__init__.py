@@ -30,7 +30,12 @@ from atak_lib.spec import (
     load_command_spec_by_name,
     register_spec_root,
 )
-from atak_lib.selectors import Selector, SelectorCatalog
+from atak_lib.selectors import (
+    Selector,
+    SelectorCatalog,
+    load_catalog,
+    register_catalog_root,
+)
 from atak_lib.ui.base import ScreenVerificationResult
 from atak_lib.ui.screen import Screen
 from atak_lib.ui.verify import verify_screen
@@ -45,10 +50,12 @@ __all__ = [
     # sessions & devices
     "SessionManager",
     "DeviceSpec",
-    # UI driver: manipulation + state facade, and the selector-catalog types
+    # UI driver: manipulation + state facade, and the selector catalog
     "Screen",
     "Selector",
     "SelectorCatalog",
+    "load_catalog",
+    "register_catalog_root",
     # result & spec types (the typed surface)
     "ScreenVerificationResult",
     "CommandSpec",

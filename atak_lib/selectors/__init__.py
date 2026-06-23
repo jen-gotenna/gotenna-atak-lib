@@ -18,7 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from importlib import resources
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -154,10 +154,57 @@ def load_catalog_file(path: Path | str) -> SelectorCatalog:
     )
 
 
+# Consumer-registered catalog roots, searched BEFORE packaged catalogs (LIFO: a
+# later registration shadows earlier ones and the packaged baseline). Mirrors the
+# legacy spec loader's register_spec_root so consumers can add/override screens in
+# the catalog without forking the library.
+_EXTRA_ROOTS: List[Path] = []
+
+
+def register_catalog_root(path: Path | str) -> None:
+    """Register a consumer-owned catalog directory, searched before packaged ones.
+
+    Layout mirrors the packaged one: ``<root>/<layer>/<screen>.yaml``. Most-recently
+    registered wins, so a consumer can shadow a packaged screen. Idempotent:
+    re-registering the same dir moves it to highest priority.
+    """
+    p = Path(path)
+    if not p.is_dir():
+        raise ValueError(f"catalog root is not a directory: {p}")
+    p = p.resolve()
+    if p in _EXTRA_ROOTS:
+        _EXTRA_ROOTS.remove(p)
+    _EXTRA_ROOTS.append(p)
+
+
+def clear_catalog_roots() -> None:
+    """Drop all consumer-registered catalog roots (back to packaged catalogs only)."""
+    _EXTRA_ROOTS.clear()
+
+
+def catalog_roots() -> List[Path]:
+    """Registered catalog roots, highest priority first."""
+    return list(reversed(_EXTRA_ROOTS))
+
+
 def load_catalog(screen: str) -> SelectorCatalog:
-    """Load a packaged catalog by dotted name, e.g. ``'ui.onboarding'``."""
+    """Load a catalog by dotted name, e.g. ``'ui.onboarding'``.
+
+    Resolution: consumer-registered roots (newest first), then the catalogs packaged
+    inside ``atak_lib.selectors``.
+    """
     layer, _, name = screen.partition(".")
+    rel = Path(layer) / f"{name}.yaml"
+    for root in reversed(_EXTRA_ROOTS):
+        cand = root / rel
+        if cand.is_file():
+            return load_catalog_file(cand)
     ref = resources.files(_CATALOG_PKG) / layer / f"{name}.yaml"
+    if not ref.is_file():
+        searched = ", ".join(str(r) for r in reversed(_EXTRA_ROOTS)) or "(none)"
+        raise FileNotFoundError(
+            f"No catalog for screen {screen!r}. Searched registered roots "
+            f"[{searched}] then packaged atak_lib.selectors/{layer}/{name}.yaml.")
     with resources.as_file(ref) as path:   # real fs path even from a wheel/zip
         return load_catalog_file(path)
 
