@@ -58,7 +58,8 @@ tested reference oracle.
 | `SessionManager`, `DeviceSpec` | session lifecycle + device descriptor |
 | `load_catalog("ui.<screen>")` → `SelectorCatalog` | the selector catalog; `.locator(element, version)` → `(by, value)` |
 | `Selector`, `SelectorCatalog` | the selector-catalog types |
-| `register_spec_root(path)` | add/override screens for the (legacy) command-spec path |
+| `register_catalog_root(path)` | add/override **catalog** screens without forking (consumer dirs `<root>/<layer>/<screen>.yaml` searched before packaged ones) |
+| `register_spec_root(path)` | same, for the (legacy) command-spec path |
 | `CommandSpec`, `ScreenVerificationResult`, `load_command_spec[_by_name]` | legacy spec/result types |
 | `catalog` | registered-command catalog: `run` / `available` / `all_specs` / `get` |
 | `runtime` | env-free helpers: `device_specs_from_inventory`, `pin_specs`, `worker_index` |

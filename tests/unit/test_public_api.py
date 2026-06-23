@@ -12,7 +12,7 @@ import atak_lib
 _EXPECTED = {
     "catalog", "runtime",
     "SessionManager", "DeviceSpec",
-    "Screen", "Selector", "SelectorCatalog",
+    "Screen", "Selector", "SelectorCatalog", "load_catalog", "register_catalog_root",
     "ScreenVerificationResult", "CommandSpec",
     "load_command_spec", "load_command_spec_by_name", "register_spec_root",
     "verify_screen",

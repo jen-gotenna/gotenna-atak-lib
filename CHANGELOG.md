@@ -20,6 +20,10 @@ to [Semantic Versioning](https://semver.org/). The **YAML spec schema** and the
   selectors) and `ui/device_details.yaml` (23 selectors, scrollable page).
 - A per-target override axis is **reserved** (not yet resolved) so non-Android
   targets (e.g. a Flutter app addressed by semantic label) are additive later.
+- **`register_catalog_root(path)`** — consumers add/override catalog screens without
+  forking (registered dirs searched before packaged catalogs; newest wins), parity
+  with the legacy `register_spec_root`. Plus `clear_catalog_roots` / `catalog_roots`.
+  `load_catalog` and `register_catalog_root` are now top-level `atak_lib` exports.
 - **`Screen` manipulation + state facade** (`atak_lib.Screen`) — drives an injected
   Appium WebDriver via catalog-resolved selectors: `tap`, `type`, `wait_for`,
   `scroll_into_view`, and the fact-returning `is_present` / `is_enabled` / `get_text`.
