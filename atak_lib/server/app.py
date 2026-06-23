@@ -99,8 +99,11 @@ class ApiApp:
         cat = load_catalog(screen)              # FileNotFoundError -> 404
         selectors = {}
         for name, sel in cat.selectors.items():
-            by, value = sel.for_version(version).as_tuple()
-            selectors[name] = {"by": by, "value": value, "status": sel.status}
+            resolved = sel.for_version(version)
+            if resolved is None:
+                continue            # removed on this version (applies: false) -- omit
+            by, value = resolved.as_tuple()
+            selectors[name] = {"by": by, "value": value, "status": resolved.status}
         return self._ok({"screen": cat.screen, "version": version,
                          "selectors": selectors})
 

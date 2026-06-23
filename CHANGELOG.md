@@ -56,7 +56,7 @@ to [Semantic Versioning](https://semver.org/). The **YAML spec schema** and the
   assertions.
 
 ### Validation
-- Stub-verified (157 passing, offline) **plus** one opt-in real-device smoke
+- Stub-verified offline (full unit suite green) **plus** one opt-in real-device smoke
   (`tests/unit/test_device_smoke.py`, marker `device_smoke`, skipped by default): the
   `Screen` facade resolved all 10 onboarding selectors on SM-S721U / plugin 3.0.0
   (859d398a) — text matched spec, `login_button` enabled, `scroll_into_view` found.

@@ -8,19 +8,19 @@ Importing ``atak_lib`` reads no environment variables and does NOT import Appium
 (Appium is imported lazily only when a real session connects), so it is safe to
 import in any context, hardware or not.
 
-Quickstart::
+Quickstart -- drive + assert (the library reports facts; you own the assertions)::
 
-    from atak_lib import SessionManager, DeviceSpec, verify_screen
+    from atak_lib import SessionManager, DeviceSpec, Screen
 
     with SessionManager([DeviceSpec(udid="...")], stub=False) as s:
-        result = verify_screen("ui.verify_onboarding_screen", s.driver)
-        assert result.passed, result.failures
+        screen = Screen("ui.onboarding", s.driver)
+        screen.tap("login_button")
+        assert screen.is_present("terms_of_service_checkbox")   # your expectation
 
-Add your own screens without forking the library::
-
-    from atak_lib import register_spec_root, verify_screen
-    register_spec_root("my/specs")            # holds ui/verify_foo.yaml
-    verify_screen("ui.verify_foo", driver)    # YAML stays the single source of truth
+The legacy ``verify_screen`` / ``verify_*`` path (the library-asserts model) is
+deprecated; migrate to ``Screen`` + your own assertions (see
+``docs/migration-verify-to-screen.md``). Non-Python consumers use the HTTP service
+boundary (``atak_lib.server`` / the ``atak-lib-server`` console script).
 """
 from atak_lib import catalog, runtime
 from atak_lib.session.session_manager import DeviceSpec, SessionManager

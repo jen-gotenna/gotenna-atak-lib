@@ -122,6 +122,33 @@ def test_every_response_carries_schema_version():
 
 # ---- HTTP wiring (bind only, no serve) --------------------------------------
 
+def test_get_selectors_omits_removed_element(monkeypatch):
+    # A catalog with an applies:false override must not 500 the endpoint; the removed
+    # element is simply omitted for that version (no stale selector served).
+    import os
+    import tempfile
+    import textwrap
+    import atak_lib.server.app as appmod
+    from atak_lib.selectors import load_catalog_file
+    d = tempfile.mkdtemp()
+    os.makedirs(os.path.join(d, "ui"))
+    path = os.path.join(d, "ui", "rm.yaml")
+    with open(path, "w") as f:
+        f.write(textwrap.dedent("""
+            screen: rm
+            supported_versions: ["3.0", "3.2"]
+            selectors:
+              keep: { by: id, value: k, status: CONFIRMED }
+              gone: { by: id, value: g, status: CONFIRMED, versions: { "3.2": { applies: false } } }
+        """))
+    cat = load_catalog_file(path)
+    monkeypatch.setattr(appmod, "load_catalog", lambda screen: cat)
+    status, body = ApiApp().dispatch("GET", "/api/selectors/ui.rm", {"version": ["3.2"]}, {})
+    assert status == 200                                   # not a 500
+    assert "keep" in body["selectors"]
+    assert "gone" not in body["selectors"]                 # removed -> omitted
+
+
 def test_make_server_binds_a_port():
     srv = make_server(host="127.0.0.1", port=0)   # ephemeral port
     try:

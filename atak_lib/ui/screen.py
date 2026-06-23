@@ -63,6 +63,12 @@ class Screen:
 
     # --- state queries (facts, never assertions) ---
     def is_present(self, element: str) -> bool:
+        # An element removed on this version (catalog `applies: false`) is genuinely
+        # absent -> False, not an error. (Unknown element names still raise via
+        # find_all -> locator, with the catalog's "have: ..." message.)
+        if element in self._catalog.selectors and \
+                not self._catalog.applies(element, self.version):
+            return False
         return len(self.find_all(element)) > 0
 
     def is_enabled(self, element: str) -> bool:
