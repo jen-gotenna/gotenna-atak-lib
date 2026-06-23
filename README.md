@@ -1,92 +1,116 @@
 # gotenna-atak-lib
 
-Env-agnostic **ATAK UI driver + command library**. Locators and screen checks live
-**once** in versioned YAML (the single source of truth); a soft-assert engine runs
-them against an Appium driver. Built to be consumed by *any* project — Python test
-suites, future QA tooling, or non-Python clients via a service boundary — without
-dragging a particular test runner along.
+Env-agnostic **shared UI driver** for the goTenna ATAK plugin. Selectors live **once**
+in versioned YAML (the single source of truth); a `Screen` facade resolves them and
+drives an Appium driver. The library **reports facts** (is this element present /
+enabled / what's its text) — **your test framework owns the expected-result
+assertions**. Built to be consumed by *any* project: Python suites by import,
+non-Python clients (QWIK, other apps) via an HTTP service boundary.
 
-Extracted from the `atak-plugin-v3-qa-automation` suite (QA-3920). One engine, shared
-YAML; non-Python consumers reach it through a service rather than re-implementing it.
+Extracted from `atak-plugin-v3-qa-automation` (QA-3920); evolved into a shared driver
+under QA-3933. One engine, one YAML source of truth; no consumer redefines selectors.
 
 ## Why it's safe to depend on
+- **Driver, not oracle.** The library finds/queries/drives; it never asserts pass/fail.
+  Each consumer applies its own expectations against the facts it returns.
 - **No environment reads.** `atak_lib` never touches env vars; the caller injects the
-  stub flag and device udids. Importing it has no side effects beyond loading packaged
-  specs.
-- **Appium is optional + lazy.** The only hard dependency is PyYAML. Appium is imported
-  only when a real session connects (`[appium]` extra).
-- **Typed.** Ships `py.typed` (PEP 561).
-- **Versioned contract.** The YAML schema + locator-status model is a semver surface —
-  see [CHANGELOG.md](CHANGELOG.md).
+  stub flag and device udids. Importing it loads no env and no Appium.
+- **Appium is optional + lazy.** Only hard dependency is PyYAML; Appium imports only
+  when a real session connects (`[appium]` extra).
+- **Typed** (`py.typed`, PEP 561). **Versioned contract** — the YAML selector schema is
+  a semver surface; see [CHANGELOG.md](CHANGELOG.md).
 
 ## Install
 
 ```bash
 pip install gotenna-atak-lib              # core (PyYAML only)
-pip install gotenna-atak-lib[appium]      # + real-device execution
+pip install gotenna-atak-lib[appium]      # + real-device execution (Appium/Selenium)
+pip install gotenna-atak-lib[server]      # + the HTTP service boundary (stdlib today)
 pip install -e ../gotenna-atak-lib        # local dev (editable)
 ```
 
-## Quickstart
+## Quickstart — drive + assert (the consumer pattern)
 
 ```python
-from atak_lib import SessionManager, DeviceSpec, verify_screen
+from atak_lib import SessionManager, DeviceSpec, Screen
 
 with SessionManager([DeviceSpec(udid="...")], stub=False) as s:
-    result = verify_screen("ui.verify_onboarding_screen", s.driver)
-    assert result.passed, result.failures
+    screen = Screen("ui.onboarding", s.driver)        # version=... for a specific build
+    screen.tap("login_button")                        # manipulation
+    # YOUR expectations live in YOUR repo — the library only reports facts:
+    assert screen.is_present("terms_of_service_checkbox")
+    assert screen.is_enabled("login_button")
+    assert screen.get_text("logo_subtext") == "Please select a deployment option below"
 ```
 
-Bring your own Appium driver, or let `SessionManager` start one (needs `[appium]`).
-For hardware-free runs use `stub=True`.
+`Screen` methods: `tap`, `type`, `wait_for`, `scroll_into_view` (manipulation) and
+`is_present`, `is_enabled`, `get_text` (facts). Bring your own Appium driver or let
+`SessionManager` start one (`[appium]`); for hardware-free runs use `stub=True`.
+
+See [`examples/consumer_oracle.py`](examples/consumer_oracle.py) for a complete,
+tested reference oracle.
 
 ## Public API
 
 | Symbol | What |
 |---|---|
+| `Screen(screen, driver, version=…)` | the UI driver: tap/type/wait/scroll + is_present/is_enabled/get_text |
 | `SessionManager`, `DeviceSpec` | session lifecycle + device descriptor |
-| `verify_screen(name, driver, ...)` | run any spec by dotted name (honors `register_spec_root`) |
-| `verify_onboarding_screen` / `verify_device_details_screen` / `verify_set_as_relay_dialog` | the built-in screen checks |
-| `register_spec_root(path)` | add/override screens without forking |
-| `load_command_spec` / `load_command_spec_by_name` | load a spec (path or dotted name) |
-| `CommandSpec`, `ScreenVerificationResult` | the typed result + spec model |
+| `load_catalog("ui.<screen>")` → `SelectorCatalog` | the selector catalog; `.locator(element, version)` → `(by, value)` |
+| `Selector`, `SelectorCatalog` | the selector-catalog types |
+| `register_spec_root(path)` | add/override screens for the (legacy) command-spec path |
+| `CommandSpec`, `ScreenVerificationResult`, `load_command_spec[_by_name]` | legacy spec/result types |
 | `catalog` | registered-command catalog: `run` / `available` / `all_specs` / `get` |
 | `runtime` | env-free helpers: `device_specs_from_inventory`, `pin_specs`, `worker_index` |
 
-Everything else (`registry`, `ui.base.ScreenCommand`, `session.capabilities`,
-`session.stub_driver`) is private and may change without a major bump.
+Private (may change without a major bump): `registry`, `ui.base.ScreenCommand`,
+`session.capabilities`, `session.stub_driver`.
 
-## Add your own screens (no fork, no Python)
+> **Deprecated:** `verify_screen` / `verify_*` / `ScreenCommand` — the old *library-asserts*
+> path. Still working, but the library shouldn't own expected results. Migrate to
+> `Screen` + your own assertions: see
+> [`docs/migration-verify-to-screen.md`](docs/migration-verify-to-screen.md). Slated for
+> removal in a future major.
 
-```python
-from atak_lib import register_spec_root, verify_screen
+## Non-Python consumers — the HTTP service boundary
 
-register_spec_root("my/specs")            # holds ui/verify_foo.yaml (same layout as ours)
-verify_screen("ui.verify_foo", driver)    # YAML stays the single source of truth
+Non-Python clients (QWIK/TS, other apps) reach the same engine over HTTP without
+reimplementing it — install `[server]`, run `atak-lib-server`, then:
+
+```
+GET    /api/selectors/<screen>[?version=]          -> selector definitions
+POST   /api/session   {stub:true | device:{...}}   -> {sessionId}
+DELETE /api/session/<id>                            -> {closed:true}
+POST   /api/action    {sessionId, screen, element, action, args?}   # tap/type/wait_for/scroll_into_view
+POST   /api/query     {sessionId, screen, element, query}           # is_present/is_enabled/get_text
 ```
 
-Registered roots are searched **before** packaged specs (newest registration wins), so
-you can also shadow a built-in screen.
-
-## The stub contract
-
-`SessionManager([...], stub=True)` runs without hardware: commands return canned
-results from each spec's `stub_returns`, and `UNCONFIRMED` locators are tolerated under
-the default lenient mode. This keeps a consumer's suite green before locators are
-hardware-confirmed.
+Every response carries a versioned `schemaVersion`. The server reads no env — the
+client states the target (`{"stub": true}` or a device); real-device sessions take an
+injected `driver_factory`.
 
 ## Versioning across app releases
 
-Specs carry `supported_versions` and per-locator `versions` overrides; `verify_screen`
-and `CommandSpec.for_version(v)` resolve the right locators for a given plugin version
-so older-version coverage isn't broken when the app changes. Full model + recipe:
-`docs/legacy_versioning.md` (framework repo).
+The catalog is version-aware: selectors carry per-version overrides keyed by MAJOR.MINOR
+series, and `SelectorCatalog.locator(element, version)` resolves the right selector for a
+build. An override of `{applies: false}` marks an element **removed** on that version —
+`locator` then raises rather than returning a stale selector, and `catalog.applies(element,
+version)` reports it — so older-version coverage isn't silently broken when the app
+changes. Background: `docs/legacy_versioning.md`.
+
+## The stub contract
+
+A `StubWebDriver` (via `SessionManager([...], stub=True)`, or injected directly) runs
+the whole driver with no device and no Appium — `Screen` calls resolve against an
+in-memory fake. This keeps a consumer's suite green offline; on-device validation is a
+separate, opt-in step (see `tests/unit/test_device_smoke.py`).
 
 ## Development
 
 ```bash
 pip install -e .[dev]
-pytest                      # runs tests/unit
+pytest                                  # unit suite (stub; the library's contract)
+ATAK_DEVICE_SMOKE=1 ATAK_SMOKE_UDID=<udid> pytest -m device_smoke   # opt-in, real device
 ```
 
-The unit suite is the library's contract — it travels with this repo.
+The unit suite travels with this repo and is the library's contract.

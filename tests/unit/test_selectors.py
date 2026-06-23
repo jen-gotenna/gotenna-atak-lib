@@ -75,6 +75,31 @@ selectors:
     assert cat.selectors["btn"].for_version("3.2").status == UNCONFIRMED
 
 
+def test_applies_false_removes_element_no_stale_locator(tmp_path):
+    # Element removed on 3.2: must NOT resolve to the stale baseline locator.
+    cat = load_catalog_file(_write(tmp_path, """
+screen: thing
+layer: ui
+supported_versions: ["3.0", "3.2"]
+selectors:
+  gone:
+    by: id
+    value: base.id
+    status: CONFIRMED
+    versions:
+      "3.2": { applies: false }
+"""))
+    # baseline / 3.0: still present
+    assert cat.locator("gone", "3.0") == ("id", "base.id")
+    assert cat.applies("gone", "3.0") is True
+    # 3.2: removed -> for_version is None, applies() False, locator RAISES (no stale tuple)
+    assert cat.selectors["gone"].for_version("3.2") is None
+    assert cat.applies("gone", "3.2") is False
+    with pytest.raises(KeyError) as ei:
+        cat.locator("gone", "3.2")
+    assert "removed" in str(ei.value) and "base.id" not in str(ei.value)
+
+
 def test_no_version_returns_baseline():
     s = Selector(name="x", by="id", value="a", status=CONFIRMED)
     assert s.for_version(None) is s
@@ -91,7 +116,7 @@ selectors:
 
 
 def test_catalog_holds_no_assertion_fields():
-    # Guard the RFC boundary: catalog selectors expose locator + resolvability only,
+    # Guard the driver/oracle boundary: catalog selectors expose locator + resolvability only,
     # never expected-result fields (expect_enabled / this_build_present / present).
     s = load_catalog("ui.onboarding").selectors["login_button"]
     for forbidden in ("expect_enabled", "this_build_present", "expected_present"):

@@ -115,3 +115,31 @@ def test_version_is_threaded_into_resolution():
     drv = StubWebDriver(present_all=True)
     Screen(cat, drv, version="3.2").tap("btn")
     assert drv.taps == [("id", "new.id")]
+
+
+def test_is_present_false_for_element_removed_on_version():
+    # An element removed on a version (applies: false) is absent -> is_present False,
+    # NOT a raise -- even when the driver would report everything present.
+    import os
+    import tempfile
+    import textwrap
+    from atak_lib.selectors import load_catalog_file
+    d = tempfile.mkdtemp()
+    os.makedirs(os.path.join(d, "ui"))
+    path = os.path.join(d, "ui", "rm.yaml")
+    with open(path, "w") as f:
+        f.write(textwrap.dedent("""
+            screen: rm
+            supported_versions: ["3.0", "3.2"]
+            selectors:
+              gone:
+                by: id
+                value: a
+                status: CONFIRMED
+                versions:
+                  "3.2": { applies: false }
+        """))
+    cat = load_catalog_file(path)
+    drv = StubWebDriver(present_all=True)          # driver says everything present...
+    assert Screen(cat, drv, version="3.2").is_present("gone") is False   # ...catalog wins
+    assert Screen(cat, drv, version="3.0").is_present("gone") is True
