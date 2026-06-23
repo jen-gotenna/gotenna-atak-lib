@@ -36,6 +36,15 @@ def test_loads_packaged_device_details_catalog():
         "id", "com.gotenna.atak:id/deviceDetailsRelayModeButton")
 
 
+def test_loads_packaged_set_as_relay_catalog():
+    cat = load_catalog("ui.set_as_relay")
+    assert cat.screen == "set_as_relay"
+    assert len(cat.selectors) == 4
+    assert all(s.status == CONFIRMED for s in cat.selectors.values())
+    by, value = cat.locator("set_as_relay_button")
+    assert by == "-android uiautomator" and "button1" in value
+
+
 def test_resolve_id_selector():
     assert locator("ui.onboarding", "login_button") == (
         "id", "com.gotenna.atak:id/loginButton")
