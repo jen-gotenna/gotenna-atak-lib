@@ -16,8 +16,9 @@ to [Semantic Versioning](https://semver.org/). The **YAML spec schema** and the
   series matching as the locator model; ships as packaged YAML
   (`atak_lib/selectors/<layer>/<screen>.yaml`). API: `load_catalog("ui.<screen>")`,
   `catalog.locator(element, version)`, `selectors.locator(screen, element, version)`.
-- Catalogs migrated from the confirmed verify specs: `ui/onboarding.yaml` (10
-  selectors) and `ui/device_details.yaml` (23 selectors, scrollable page).
+- Catalogs migrated from the confirmed verify specs (all three known screens):
+  `ui/onboarding.yaml` (10), `ui/device_details.yaml` (23, scrollable), and
+  `ui/set_as_relay.yaml` (4, confirm dialog).
 - A per-target override axis is **reserved** (not yet resolved) so non-Android
   targets (e.g. a Flutter app addressed by semantic label) are additive later.
 - **`register_catalog_root(path)`** — consumers add/override catalog screens without

@@ -1,0 +1,33 @@
+# Selector catalog: 'Set as Relay' confirm dialog (TestRail C149725).
+# DEFINITIONS ONLY -- how to ADDRESS each element; assertions live in consumers.
+# See docs/design/shared-ui-driver.md. The dialog uses Android framework ids
+# (android:id/...) scoped by text via -android uiautomator. All 4 CONFIRMED on
+# plugin 3.0.0 (859d398a). Reached by tapping the relay-mode button on Device
+# Details (a state change), so not covered by the read-only device smoke.
+
+screen: set_as_relay
+layer: ui
+app: com.gotenna.atak
+supported_versions:
+- '3.0'
+selectors:
+  dialog_title:
+    by: -android uiautomator
+    value: new UiSelector().resourceId("android:id/alertTitle").text("Set as Relay?")
+    status: CONFIRMED
+    description: Dialog title
+  dialog_body:
+    by: -android uiautomator
+    value: new UiSelector().resourceId("android:id/message").textContains("pair directly without manually resetting relay mode")
+    status: CONFIRMED
+    description: Dialog body text (relay-mode warning)
+  cancel_button:
+    by: -android uiautomator
+    value: new UiSelector().resourceId("android:id/button2").text("Cancel")
+    status: CONFIRMED
+    description: Cancel button
+  set_as_relay_button:
+    by: -android uiautomator
+    value: new UiSelector().resourceId("android:id/button1").text("Set as Relay")
+    status: CONFIRMED
+    description: Set as Relay (confirm) button
