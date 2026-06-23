@@ -1,0 +1,128 @@
+# Selector catalog: goTenna Device Details page (radio connected via BLE).
+# DEFINITIONS ONLY -- how to ADDRESS each element. No assertions / expected results
+# (those live in the consuming test framework). See docs/design/shared-ui-driver.md.
+#
+# `status` = selector RESOLVABILITY on the baseline build. All 23 CONFIRMED on
+# plugin 3.0.0 (859d398a) + a Pro X2 radio (TestRail C149719). Long/scrollable page.
+
+screen: device_details
+layer: ui
+app: com.gotenna.atak
+supported_versions: ["3.0"]
+
+selectors:
+  status_icon:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsStatusImageView
+    status: CONFIRMED
+    description: Connection status icon (bluetooth/connected)
+  status_text:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsStatusTextView
+    status: CONFIRMED
+    description: Connection status text
+  test_connection_button:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsTestConnectionContainer
+    status: CONFIRMED
+    description: Test Connection button (sun icon + "Test Connection")
+  battery_icon:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsBatteryImageView
+    status: CONFIRMED
+    description: Battery icon
+  battery_text:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsBatteryTextView
+    status: CONFIRMED
+    description: Battery text
+  antenna_icon:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsAntennaImageView
+    status: CONFIRMED
+    description: Antenna icon
+  antenna_text:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsAntennaTextView
+    status: CONFIRMED
+    description: Antenna quality text
+  operation_mode_icon:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsOperationModeImageView
+    status: CONFIRMED
+    description: Operation Mode icon (toolbox)
+  operation_mode_text:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsOperationModeTextView
+    status: CONFIRMED
+    description: Operation Mode text
+  serial_text:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsSerialTextView
+    status: CONFIRMED
+    description: Serial number text (radio icon + S/N)
+  firmware_icon:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsFirmwareImageView
+    status: CONFIRMED
+    description: Firmware icon
+  firmware_text:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsFirmwareTextView
+    status: CONFIRMED
+    description: Firmware text
+  change_firmware_button:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsChangeFirmwareContainer
+    status: CONFIRMED
+    description: Change Firmware button (chip icon + "Change Firmware")
+  settings_modes_title:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsSettingsTitleTextView
+    status: CONFIRMED
+    description: Settings + Modes section title
+  relay_mode_tile:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsRelayModeContainer
+    status: CONFIRMED
+    description: Relay Mode tile
+  relay_mode_set_button:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsRelayModeButton
+    status: CONFIRMED
+    description: Relay Mode "Set as Relay" button
+  led_mode_tile:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsLedModeContainer
+    status: CONFIRMED
+    description: LED tile
+  led_mode_switch:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsLedModeSwitch
+    status: CONFIRMED
+    description: LED toggle switch
+  tether_mode_tile:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsTetherModeContainer
+    status: CONFIRMED
+    description: Tether Mode tile
+  tether_mode_switch:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsTetherModeSwitch
+    status: CONFIRMED
+    description: Tether Mode toggle switch
+  listen_only_mode_tile:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsListenOnlyModeContainer
+    status: CONFIRMED
+    description: Listen Only Mode tile
+  listen_only_mode_switch:
+    by: id
+    value: com.gotenna.atak:id/deviceDetailsListenOnlyModeSwitch
+    status: CONFIRMED
+    description: Listen Only Mode toggle switch
+  disconnect_button:
+    by: id
+    value: com.gotenna.atak:id/btnPrimary
+    status: CONFIRMED
+    description: Floating Disconnect button

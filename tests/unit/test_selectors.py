@@ -26,6 +26,16 @@ def test_loads_packaged_onboarding_catalog():
     assert all(s.status == CONFIRMED for s in cat.selectors.values())
 
 
+def test_loads_packaged_device_details_catalog():
+    cat = load_catalog("ui.device_details")
+    assert cat.screen == "device_details"
+    assert cat.app == "com.gotenna.atak"
+    assert len(cat.selectors) == 23
+    assert all(s.status == CONFIRMED for s in cat.selectors.values())
+    assert cat.locator("relay_mode_set_button") == (
+        "id", "com.gotenna.atak:id/deviceDetailsRelayModeButton")
+
+
 def test_resolve_id_selector():
     assert locator("ui.onboarding", "login_button") == (
         "id", "com.gotenna.atak:id/loginButton")
