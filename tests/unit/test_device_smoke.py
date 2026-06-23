@@ -57,3 +57,35 @@ def test_onboarding_selectors_resolve_on_device():
         assert s.scroll_into_view("terms_of_service_text")  # real UiAutomator2 scroll
     finally:
         driver.quit()
+
+
+def test_device_details_selectors_resolve_on_device():
+    # Separate opt-in (a different device may sit on Device Details with a radio
+    # connected). Long/scrollable screen -> exercises scroll_into_view for real.
+    if os.environ.get("ATAK_DEVICE_SMOKE") != "1" or not os.environ.get("ATAK_SMOKE_DD_UDID"):
+        pytest.skip("opt-in: set ATAK_DEVICE_SMOKE=1 + ATAK_SMOKE_DD_UDID "
+                    "(radio connected, plugin on Device Details)")
+    from appium import webdriver
+    from appium.options.android import UiAutomator2Options
+
+    from atak_lib import Screen
+    from atak_lib.selectors import load_catalog
+
+    server = os.environ.get("ATAK_SMOKE_APPIUM", "http://127.0.0.1:4723")
+    opts = UiAutomator2Options()
+    opts.platform_name = "Android"
+    opts.automation_name = "UiAutomator2"
+    opts.set_capability("appium:udid", os.environ["ATAK_SMOKE_DD_UDID"])
+    opts.set_capability("appium:noReset", True)
+    opts.set_capability("appium:forceAppLaunch", False)
+    opts.set_capability("appium:newCommandTimeout", 120)
+
+    driver = webdriver.Remote(server, options=opts)
+    try:
+        s = Screen("ui.device_details", driver)
+        # Elements derive from the catalog so the test can't drift from it.
+        elements = list(load_catalog("ui.device_details").selectors)
+        missing = [e for e in elements if not s.scroll_into_view(e)]
+        assert not missing, f"device_details selectors not resolved on device: {missing}"
+    finally:
+        driver.quit()

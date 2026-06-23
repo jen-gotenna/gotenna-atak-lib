@@ -16,7 +16,8 @@ to [Semantic Versioning](https://semver.org/). The **YAML spec schema** and the
   series matching as the locator model; ships as packaged YAML
   (`atak_lib/selectors/<layer>/<screen>.yaml`). API: `load_catalog("ui.<screen>")`,
   `catalog.locator(element, version)`, `selectors.locator(screen, element, version)`.
-- First catalog: `ui/onboarding.yaml` (10 selectors, migrated from the verify spec).
+- Catalogs migrated from the confirmed verify specs: `ui/onboarding.yaml` (10
+  selectors) and `ui/device_details.yaml` (23 selectors, scrollable page).
 - A per-target override axis is **reserved** (not yet resolved) so non-Android
   targets (e.g. a Flutter app addressed by semantic label) are additive later.
 - **`Screen` manipulation + state facade** (`atak_lib.Screen`) — drives an injected
@@ -59,8 +60,10 @@ to [Semantic Versioning](https://semver.org/). The **YAML spec schema** and the
 - Stub-verified offline (full unit suite green) **plus** one opt-in real-device smoke
   (`tests/unit/test_device_smoke.py`, marker `device_smoke`, skipped by default): the
   `Screen` facade resolved all 10 onboarding selectors on SM-S721U / plugin 3.0.0
-  (859d398a) — text matched spec, `login_button` enabled, `scroll_into_view` found.
-  Broader device-matrix + radio-in-the-loop validation remains deferred.
+  (859d398a) — text matched spec, `login_button` enabled, `scroll_into_view` found —
+  and all 23 `device_details` selectors on a second SM-S721U (Pro X2 radio connected,
+  same build) via `scroll_into_view` across the long page. Broader device-matrix +
+  multi-radio validation remains deferred.
 
 > The existing `verify_*` / `assertions` path is unchanged and still works; the new
 > catalog + `Screen` are added alongside. The framework-repo rewiring (and any removal
