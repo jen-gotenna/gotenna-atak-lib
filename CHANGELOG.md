@@ -43,10 +43,24 @@ to [Semantic Versioning](https://semver.org/). The **YAML spec schema** and the
   Console entry point `atak-lib-server`. Reads no env — the client states the target
   (`{"stub": true}` or a device); real-device sessions take an injected `driver_factory`.
 
+### Fixed
+- **Selector version-removal.** `Selector.for_version` now handles `{"applies": false}`
+  (element removed on a version): it returns `None` and `SelectorCatalog.locator` raises
+  rather than returning the **stale baseline** selector — parity with the legacy
+  `Locator.for_version` and the backward-compat contract. Added `SelectorCatalog.applies(
+  element, version)` so consumers can check applicability without catching.
+
 ### Deprecated
 - The in-lib assertion path (`verify_screen`, `verify_*`, `ScreenCommand`): the
   library should report facts, not pass/fail. Use `Screen` + consumer-owned
   assertions.
+
+### Validation
+- Stub-verified (157 passing, offline) **plus** one opt-in real-device smoke
+  (`tests/unit/test_device_smoke.py`, marker `device_smoke`, skipped by default): the
+  `Screen` facade resolved all 10 onboarding selectors on SM-S721U / plugin 3.0.0
+  (859d398a) — text matched spec, `login_button` enabled, `scroll_into_view` found.
+  Broader device-matrix + radio-in-the-loop validation remains deferred.
 
 > The existing `verify_*` / `assertions` path is unchanged and still works; the new
 > catalog + `Screen` are added alongside. The framework-repo rewiring (and any removal

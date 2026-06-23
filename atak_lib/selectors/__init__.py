@@ -50,12 +50,16 @@ class Selector:
         """(by, value) -- the form Appium's find_element expects."""
         return (self.by, self.value)
 
-    def for_version(self, version: Optional[str]) -> "Selector":
+    def for_version(self, version: Optional[str]) -> Optional["Selector"]:
         """Resolve this selector for a target app version.
 
         Returns self unchanged when there's no version or no matching override (the
-        baseline is never mutated); otherwise a new Selector with the version's
-        by/value/status merged on.
+        baseline is never mutated); a new Selector with the version's by/value/status
+        merged on; or **None** when the override marks the element absent on that
+        version (``{"applies": false}``) -- the element was removed/renamed away in
+        that build, so there is no valid selector. (Parity with
+        :meth:`atak_lib.ui.locators.Locator.for_version`; not returning the stale
+        baseline is the backward-compat contract.)
         """
         if not version or not self.versions:
             return self
@@ -67,6 +71,8 @@ class Selector:
         )
         if override is None:
             return self
+        if override.get("applies") is False:
+            return None          # element removed on this version -- no selector
         status = str(override.get("status", self.status)).upper()
         if status not in _VALID_STATUS:
             raise ValueError(
@@ -89,15 +95,32 @@ class SelectorCatalog:
     app: str = ""
     supported_versions: tuple = ()
 
+    def applies(self, element: str, version: Optional[str] = None) -> bool:
+        """Whether ``element`` exists on ``version`` (False if removed via an
+        ``applies: false`` override). Lets a consumer check applicability without
+        catching the removed-element error from :meth:`locator`."""
+        return self.selectors[element].for_version(version) is not None
+
     def locator(self, element: str, version: Optional[str] = None) -> Tuple[str, str]:
-        """Resolve ``(by, value)`` for ``element`` (version-aware)."""
+        """Resolve ``(by, value)`` for ``element`` (version-aware).
+
+        Raises ``KeyError`` if the element is unknown, or if it is **removed** on the
+        requested version (``applies: false``) -- never returns a stale baseline
+        locator for an element that doesn't exist on that build. Check
+        :meth:`applies` first if a missing element is expected.
+        """
         try:
             sel = self.selectors[element]
         except KeyError:
             raise KeyError(
                 f"no selector {element!r} on screen {self.screen!r}; have: "
                 f"{', '.join(sorted(self.selectors)) or '(none)'}")
-        return sel.for_version(version).as_tuple()
+        resolved = sel.for_version(version)
+        if resolved is None:
+            raise KeyError(
+                f"selector {element!r} is removed on version {version!r} "
+                f"(applies: false) on screen {self.screen!r} -- no valid selector")
+        return resolved.as_tuple()
 
 
 def _build_selector(name: str, d: Dict[str, Any]) -> Selector:

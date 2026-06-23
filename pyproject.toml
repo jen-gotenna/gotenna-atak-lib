@@ -56,3 +56,6 @@ packages = [
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
 addopts = "-ra"
+markers = [
+    "device_smoke: opt-in real-device smoke (needs a device + Appium); skipped by default",
+]
